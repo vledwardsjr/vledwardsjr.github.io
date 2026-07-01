@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vaughn Edwards Jr. — Data Analytics &amp; Computer Science</title>
+  <meta name="description" content="Data analytics and computer science student at James Madison University. SQL, Python, Power BI, Tableau, Excel. Actively seeking a data analyst internship.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav" id="nav" role="banner">
+  <div class="nav-inner">
+    <a href="#about" class="nav-brand" aria-label="Back to top">VE<span class="nav-brand-dot">.</span></a>
+    <nav class="nav-tabs" aria-label="Main navigation">
+      <a href="#about"      class="nav-tab" data-section="about">About</a>
+      <a href="#education"  class="nav-tab" data-section="education">Education</a>
+      <a href="#projects"   class="nav-tab" data-section="projects">Projects</a>
+      <a href="#skills"     class="nav-tab" data-section="skills">Skills</a>
+      <a href="#experience" class="nav-tab" data-section="experience">Experience</a>
+      <a href="#resume"     class="nav-tab" data-section="resume">Resume</a>
+    </nav>
+    <button class="nav-mobile-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <a href="#about"      class="mobile-tab" data-section="about">About</a>
+    <a href="#education"  class="mobile-tab" data-section="education">Education</a>
+    <a href="#projects"   class="mobile-tab" data-section="projects">Projects</a>
+    <a href="#skills"     class="mobile-tab" data-section="skills">Skills</a>
+    <a href="#experience" class="mobile-tab" data-section="experience">Experience</a>
+    <a href="#resume"     class="mobile-tab" data-section="resume">Resume</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══════════════════════ ABOUT ═══════════════════════ -->
+  <section id="about" class="section" aria-labelledby="about-heading">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container">
+      <div class="hero reveal-hero">
+        <div class="hero-label" aria-hidden="true">
+          <span class="label-prompt">&gt;_</span>
+          <span class="label-text">data analytics &middot; computer science &middot; jmu</span>
+        </div>
+        <h1 class="hero-name" id="about-heading">
+          <span class="hero-first">Vaughn</span>
+          <span class="hero-last">Edwards Jr.<span class="cursor" aria-hidden="true"></span></span>
+        </h1>
+        <p class="hero-status">Sophomore at James Madison University &mdash; actively seeking a data analyst internship</p>
+        <p class="hero-bio">Data Analytics and Computer Science student with hands-on experience building interactive dashboards in Excel and Tableau, querying and transforming large datasets with SQL, and applying ETL concepts and EDA across independent projects. Built an end-to-end NBA player and team analytics platform using SQL, Power BI, and R, including a custom statistical scoring engine and a published GitHub repository. Experienced evaluating AI&nbsp;/&nbsp;LLM outputs professionally through the Handshake AI Research Program.</p>
+        <div class="hero-contact" aria-label="Contact information">
+          <a href="mailto:vj09@icloud.com" class="contact-chip">vj09@icloud.com</a>
+          <a href="tel:7038517927" class="contact-chip">703-851-7927</a>
+          <a href="https://www.linkedin.com/in/vaughn-edwards-jr/" class="contact-chip contact-chip--ext" target="_blank" rel="noopener noreferrer">LinkedIn <span class="ext-arrow" aria-hidden="true">↗</span></a>
+          <a href="https://github.com/vledwardsjr" class="contact-chip contact-chip--ext" target="_blank" rel="noopener noreferrer">GitHub <span class="ext-arrow" aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-interests" aria-label="Interests">
+          <span class="interest-tag">NBA &amp; Sports Analytics</span>
+          <span class="interest-tag">Fitness &amp; Weightlifting</span>
+          <span class="interest-tag">Data Visualization</span>
+          <span class="interest-tag">AI / ML Technology</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ EDUCATION ═══════════════════════ -->
+  <section id="education" class="section" aria-labelledby="education-heading">
+    <div class="container">
+      <h2 class="section-heading reveal-item" id="education-heading">Education</h2>
+      <div class="edu-panel reveal-item" data-delay="60">
+        <div class="edu-top">
+          <div class="edu-info">
+            <h3 class="edu-school">James Madison University</h3>
+            <p class="edu-degree">B.S. Computer Science / Data Analytics &middot; Sophomore</p>
+          </div>
+          <div class="edu-gpa" aria-label="GPA: 3.2">
+            <span class="gpa-label">GPA</span>
+            <span class="gpa-value">3.2</span>
+          </div>
+        </div>
+        <div class="edu-courses">
+          <span class="courses-label">Relevant Coursework</span>
+          <div class="course-tags">
+            <span class="course-tag">Introduction to Data</span>
+            <span class="course-tag">Applied Statistics Using R</span>
+            <span class="course-tag">Algorithms &amp; Data Structures</span>
+            <span class="course-tag">Discrete Structures</span>
+            <span class="course-tag">Calculus I</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ PROJECTS ═══════════════════════ -->
+  <section id="projects" class="section" aria-labelledby="projects-heading">
+    <div class="container">
+      <h2 class="section-heading reveal-item" id="projects-heading">Projects</h2>
+      <div class="project-filters reveal-item" role="group" aria-label="Filter projects by tool">
+        <button class="filter-tag active" data-filter="all">All</button>
+        <button class="filter-tag" data-filter="sql">SQL</button>
+        <button class="filter-tag" data-filter="excel">Excel</button>
+        <button class="filter-tag" data-filter="powerbi">Power BI</button>
+        <button class="filter-tag" data-filter="r">R</button>
+        <button class="filter-tag" data-filter="postgresql">PostgreSQL</button>
+        <button class="filter-tag" data-filter="powerquery">Power Query</button>
+        <button class="filter-tag" data-filter="pivottables">PivotTables</button>
+        <button class="filter-tag" data-filter="tableau">Tableau</button>
+        <button class="filter-tag" data-filter="dataviz">Data Visualization</button>
+        <button class="filter-tag" data-filter="python">Python</button>
+        <button class="filter-tag" data-filter="ml">Machine Learning</button>
+        <button class="filter-tag" data-filter="streamlit">Streamlit</button>
+      </div>
+      <div class="projects-list">
+
+        <article class="project-panel project-panel--linked reveal-item" data-tags="python ml streamlit" aria-labelledby="proj5-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj5-title">LLM Response Preference Predictor</h3>
+              <span class="project-status project-status--progress" aria-label="Status: In Progress">In Progress</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">Python</span>
+              <span class="tool-tag">pandas</span>
+              <span class="tool-tag">nltk</span>
+              <span class="tool-tag">spaCy</span>
+              <span class="tool-tag">scikit-learn</span>
+              <span class="tool-tag">XGBoost</span>
+              <span class="tool-tag">Streamlit</span>
+            </div>
+            <span class="project-date">Est. July 20, 2025 &mdash; Phase 1 of 5 Active</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Training a pairwise ML classifier to predict human preference between two AI responses, using the LMSYS Chatbot Arena dataset of real-world human votes &mdash; directly adjacent to how RLHF pipelines are built</li>
+            <li>Translating professional AI evaluation experience into computable features: formalizing the structural flow and response specificity signals that consistently drive close preference decisions</li>
+            <li>End-to-end ML pipeline spanning EDA &rarr; NLP feature engineering &rarr; Logistic Regression / Random Forest / XGBoost modeling &rarr; Streamlit interactive demo</li>
+          </ul>
+          <div class="project-actions">
+            <a href="llm-preference.html"
+               class="project-case-link"
+               aria-label="View LLM Preference Predictor case study">
+              View Case Study <span aria-hidden="true">→</span>
+            </a>
+            <a href="https://github.com/vledwardsjr/LLM-Response-Preference-Project"
+               class="project-repo-link"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="View LLM Response Preference Project on GitHub">
+              View on GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-panel project-panel--linked reveal-item" data-tags="postgresql excel powerbi r" aria-labelledby="proj1-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj1-title">NBA Player &amp; Team Analytics Dashboard</h3>
+              <span class="project-status project-status--shipped" aria-label="Status: Shipped">Shipped</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">PostgreSQL</span>
+              <span class="tool-tag">Excel</span>
+              <span class="tool-tag">Power BI</span>
+              <span class="tool-tag">R</span>
+              <span class="tool-tag">PowerPoint</span>
+            </div>
+            <span class="project-date">June 2026</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Designed a normalized PostgreSQL database covering 6 NBA seasons of player and team statistics, with all scoring logic built in SQL</li>
+            <li>Built a percentile-based composite scoring system for player/team performance; diagnosed and fixed a critical formula flaw</li>
+            <li>Developed a custom award framework (MVP, DPOY, OPOY + 5 fictional awards); cut 4 categories after identifying small-sample bias</li>
+            <li>Delivered 7 Power BI dashboards, an R methodology report, and a stakeholder deck; published complete project to GitHub</li>
+          </ul>
+          <div class="project-actions">
+            <a href="nba-analytics.html"
+               class="project-case-link"
+               aria-label="View NBA Analytics case study">
+              View Case Study <span aria-hidden="true">→</span>
+            </a>
+            <a href="https://github.com/vledwardsjr/NBA-Analytics-Project"
+               class="project-repo-link"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="View NBA Analytics Project on GitHub">
+              View on GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-panel reveal-item" data-delay="80" data-tags="excel powerquery pivottables" aria-labelledby="proj2-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj2-title">NYC Jobs Market Analysis Dashboard</h3>
+              <span class="project-status project-status--shipped" aria-label="Status: Shipped">Shipped</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">Excel</span>
+              <span class="tool-tag">Power Query</span>
+              <span class="tool-tag">PivotTables</span>
+            </div>
+            <span class="project-date">February 2026</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Built an interactive Excel dashboard analyzing NYC government job postings across hiring demand, compensation trends, and employment stability</li>
+            <li>Used Power Query to clean and standardize 1,000+ records &mdash; deriving average salary fields, consolidating job categories, and isolating analysis-ready columns</li>
+            <li>Aggregated total position openings (not just posting counts) using PivotTables with slicers for dynamic filtering by agency, category, and career level</li>
+          </ul>
+          <button class="project-expand-btn" aria-expanded="false" aria-controls="proj2-detail">
+            <span class="expand-text">View Details</span> <span class="expand-arrow" aria-hidden="true">↓</span>
+          </button>
+          <div class="project-detail" id="proj2-detail" aria-hidden="true">
+            <div class="project-detail-inner">
+              <div class="project-detail-content">
+                <span class="detail-section-label">Findings</span>
+                <ul class="detail-bullets">
+                  <li>Hiring demand is concentrated in a small number of agencies and job titles; a few roles account for the majority of open positions</li>
+                  <li>Technology, Legal, and Engineering categories command the highest average salaries across career levels</li>
+                  <li>Most categories are full-time dominant, but Health roles show notably higher part-time reliance</li>
+                </ul>
+                <span class="detail-section-label">Screenshots</span>
+                <div class="project-images">
+                  <button class="project-image-item" type="button" data-img="images/nyc-jobs/NYC_Jobs_Dashboard.png" data-caption="NYC Jobs Dashboard" aria-label="View NYC Jobs Dashboard full size">
+                    <img src="images/nyc-jobs/NYC_Jobs_Dashboard.png" alt="NYC Jobs Dashboard showing job market demand by agency and position, career level salary comparisons, salary range charts by job category, and employment type stability analysis with interactive slicers" loading="lazy">
+                    <div class="project-image-caption">NYC Jobs Dashboard</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <a href="https://github.com/vledwardsjr/nyc-jobs-excel-dashboard"
+             class="project-repo-link"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="View NYC Jobs Dashboard on GitHub">
+            View on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </article>
+
+        <article class="project-panel reveal-item" data-delay="160" data-tags="sql excel" aria-labelledby="proj3-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj3-title">Job Salary Analytics</h3>
+              <span class="project-status project-status--shipped" aria-label="Status: Shipped">Shipped</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">SQL</span>
+              <span class="tool-tag">Excel</span>
+            </div>
+            <span class="project-date">December 2025</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Cleaned and analyzed 1,000+ job postings using SQL and Excel to compare compensation trends between DMV and non-DMV data markets</li>
+            <li>Wrote SQL queries to aggregate, rank, and filter salary and skill data &mdash; identifying top-paying roles and in-demand technical skills across regions</li>
+            <li>Surfaced measurable patterns: skill specialization correlates with higher pay, and certain roles command premium compensation regardless of location</li>
+          </ul>
+          <button class="project-expand-btn" aria-expanded="false" aria-controls="proj3-detail">
+            <span class="expand-text">View Details</span> <span class="expand-arrow" aria-hidden="true">↓</span>
+          </button>
+          <div class="project-detail" id="proj3-detail" aria-hidden="true">
+            <div class="project-detail-inner">
+              <div class="project-detail-content">
+                <span class="detail-section-label">Findings</span>
+                <ul class="detail-bullets">
+                  <li>Certain roles consistently command higher compensation across regions; higher-paying positions share overlapping core skill requirements</li>
+                  <li>The DMV region exhibits stronger demand for specific technical skill sets compared to non-DMV markets</li>
+                  <li>Skill specialization &mdash; particularly in SQL, Python, and BI tools &mdash; is strongly correlated with increased salary ranges</li>
+                </ul>
+                <span class="detail-section-label">Screenshots</span>
+                <div class="project-images">
+                  <button class="project-image-item" type="button" data-img="images/job-salary/Data_Analyst_US_salary.png" data-caption="Data Science Salary Dashboard" aria-label="View salary dashboard full size">
+                    <img src="images/job-salary/Data_Analyst_US_salary.png" alt="Data Science Salary Dashboard showing median salary of $90,000, top job platform Indeed, job count of 6,480, salary by role bar chart, country map, and job type distribution" loading="lazy">
+                    <div class="project-image-caption">Salary Dashboard</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/job-salary/Top_10_skills_pay.png" data-caption="Top 10 Skills by Pay" aria-label="View top skills chart full size">
+                    <img src="images/job-salary/Top_10_skills_pay.png" alt="Chart showing median salary and skill likelihood for top 10 technical skills including Python, Oracle, Tableau, R, SQL, Power BI, SAS, PowerPoint, Excel, and Word with job title filter" loading="lazy">
+                    <div class="project-image-caption">Top 10 Skills by Pay</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <a href="https://github.com/vledwardsjr/JobSalaryAnalytics"
+             class="project-repo-link"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="View Job Salary Analytics on GitHub">
+            View on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </article>
+
+        <article class="project-panel reveal-item" data-delay="240" data-tags="tableau dataviz" aria-labelledby="proj4-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj4-title">Intel Data Center Energy Analytics</h3>
+              <span class="project-status project-status--shipped" aria-label="Status: Shipped">Shipped</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">Tableau</span>
+              <span class="tool-tag">Data Visualization</span>
+            </div>
+            <span class="project-date">May 2026</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Recommended Central (CENT) as the optimal U.S. data center site for Intel &mdash; the only region that is simultaneously a net energy producer and top 5 for renewable generation</li>
+            <li>Built 6 linked Tableau views analyzing hourly generation and demand data by region, covering energy source mix, supply/demand balance over 24 hours, net production, and renewable share</li>
+            <li>Created calculated fields (Net Production, Renewable Energy %, Percent Difference) and an interactive period parameter for dynamic time-window filtering across all views</li>
+          </ul>
+          <button class="project-expand-btn" aria-expanded="false" aria-controls="proj4-detail">
+            <span class="expand-text">View Details</span> <span class="expand-arrow" aria-hidden="true">↓</span>
+          </button>
+          <div class="project-detail" id="proj4-detail" aria-hidden="true">
+            <div class="project-detail-inner">
+              <div class="project-detail-content">
+                <span class="detail-section-label">Recommendation</span>
+                <ul class="detail-bullets">
+                  <li><strong>Central (CENT)</strong> &mdash; the recommended site. It balances energy surplus, grid stability, and renewable usage better than any alternative: net producer with strong wind capacity</li>
+                  <li>Mid-Atlantic rejected despite its July surplus: heavy fossil fuel reliance undermines long-term sustainability</li>
+                  <li>California rejected despite top-tier solar: runs a net energy deficit, making grid reliability a risk</li>
+                </ul>
+                <span class="detail-section-label">Key Findings</span>
+                <ul class="detail-bullets">
+                  <li>MIDA, SW, CENT, and SE are net energy producers &mdash; generation consistently exceeds demand</li>
+                  <li>Top 3 regions by renewable %: NW (hydropower), CENT (wind), CAL (solar)</li>
+                  <li>CENT is the only region that is simultaneously a net producer and in the top 5 for renewable generation</li>
+                  <li>Mid-Atlantic&rsquo;s largest surplus occurs in July &mdash; seasonal, not structural</li>
+                  <li>California&rsquo;s wind peaks ~12 PM&ndash;9 PM (cresting ~3&ndash;4 PM); strong solar but chronic deficit overall</li>
+                </ul>
+                <span class="detail-section-label">Screenshots</span>
+                <div class="project-images">
+                  <button class="project-image-item project-image-featured" type="button" data-img="images/intel-energy/Final_Intel_Dashboard.png" data-caption="Intel Data Center Energy Analytics — Full Dashboard" aria-label="View full Intel energy analytics dashboard">
+                    <img src="images/intel-energy/Final_Intel_Dashboard.png" alt="Intel Data Center Energy Analytics full Tableau dashboard showing six linked views: Energy Source by Region, Supply and Demand Over 24h, Hourly Difference in Generation, Net Production, Renewable Energy, and Utility Power Source Breakdown with interactive period filter" loading="lazy">
+                    <div class="project-image-caption">Full Dashboard</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Energy_Source_By_Region.png" data-caption="Energy Source by Region" aria-label="View energy source by region chart">
+                    <img src="images/intel-energy/Energy_Source_By_Region.png" alt="Stacked bar chart showing energy source mix (coal, natural gas, nuclear, wind, solar, hydro) across U.S. grid regions, used to assess renewable dependency by area" loading="lazy">
+                    <div class="project-image-caption">Energy Source by Region</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Supply_and_Demand_by_Region_Over24h.png" data-caption="Supply and Demand by Region Over 24h" aria-label="View supply and demand over 24 hours">
+                    <img src="images/intel-energy/Supply_and_Demand_by_Region_Over24h.png" alt="Line chart overlaying energy generation and demand across a 24-hour period for each U.S. region, highlighting intraday supply surplus and deficit windows" loading="lazy">
+                    <div class="project-image-caption">Supply &amp; Demand Over 24h</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Hourly_Difference_in_Generation.png" data-caption="Hourly Difference in Generation" aria-label="View hourly generation difference chart">
+                    <img src="images/intel-energy/Hourly_Difference_in_Generation.png" alt="Chart showing the hourly difference between energy generation and demand by region, revealing which regions sustain surpluses or deficits across the day" loading="lazy">
+                    <div class="project-image-caption">Hourly Difference in Generation</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Net_Production.png" data-caption="Net Production by Region" aria-label="View net production by region">
+                    <img src="images/intel-energy/Net_Production.png" alt="Net Production view comparing total generation minus demand across U.S. regions, identifying MIDA, SW, CENT, and SE as consistent net energy producers" loading="lazy">
+                    <div class="project-image-caption">Net Production</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Renewable_Energy_Pct_of_Overall.png" data-caption="Renewable Energy as % of Overall Generation" aria-label="View renewable energy percentage by region">
+                    <img src="images/intel-energy/Renewable_Energy_Pct_of_Overall.png" alt="Bar chart ranking U.S. regions by renewable energy as a percentage of total generation, with NW (hydro), CENT (wind), and CAL (solar) leading the field" loading="lazy">
+                    <div class="project-image-caption">Renewable Energy %</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Renewable_Energy_Per_Hour_in_Cal.png" data-caption="Renewable Energy Per Hour in California" aria-label="View California renewable energy by hour">
+                    <img src="images/intel-energy/Renewable_Energy_Per_Hour_in_Cal.png" alt="Hourly renewable energy breakdown for California showing wind generation peaking in the afternoon from roughly 12 PM to 9 PM, cresting around 3 to 4 PM, alongside solar and hydro contributions" loading="lazy">
+                    <div class="project-image-caption">CA Renewable Energy per Hour</div>
+                  </button>
+                  <button class="project-image-item" type="button" data-img="images/intel-energy/Utility_Power_Source_Breakdown.png" data-caption="Utility Power Source Breakdown" aria-label="View utility power source breakdown">
+                    <img src="images/intel-energy/Utility_Power_Source_Breakdown.png" alt="Utility Power Source Breakdown view showing the split between fossil fuel and renewable sources by region, used to evaluate long-term grid sustainability for data center siting" loading="lazy">
+                    <div class="project-image-caption">Utility Power Source Breakdown</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <a href="https://github.com/vledwardsjr/Intel-Data-Center-Energy-Analytics"
+             class="project-repo-link"
+             target="_blank"
+             rel="noopener noreferrer"
+             aria-label="View Intel Data Center Energy Analytics on GitHub">
+            View on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ SKILLS ═══════════════════════ -->
+  <section id="skills" class="section" aria-labelledby="skills-heading">
+    <div class="container">
+      <h2 class="section-heading reveal-item" id="skills-heading">Skills</h2>
+
+      <div class="skill-groups">
+
+        <div class="skill-group reveal-item">
+          <h3 class="skill-group-title">Programming &amp; Data Tools</h3>
+          <div class="skill-tags">
+            <span class="skill-tag skill-tag--primary">Python</span>
+            <span class="skill-tag skill-tag--sub">pandas</span>
+            <span class="skill-tag skill-tag--sub">data manipulation</span>
+            <span class="skill-tag skill-tag--sub">scripting</span>
+            <span class="skill-tag skill-tag--primary">SQL</span>
+            <span class="skill-tag skill-tag--sub">window functions</span>
+            <span class="skill-tag skill-tag--sub">CTEs</span>
+            <span class="skill-tag skill-tag--sub">layered view architecture</span>
+            <span class="skill-tag skill-tag--sub">relational database design</span>
+            <span class="skill-tag skill-tag--primary">Excel</span>
+            <span class="skill-tag skill-tag--sub">PivotTables</span>
+            <span class="skill-tag skill-tag--sub">Power Query</span>
+            <span class="skill-tag skill-tag--sub">advanced formulas</span>
+            <span class="skill-tag skill-tag--sub">data cleaning</span>
+            <span class="skill-tag skill-tag--primary">Tableau</span>
+            <span class="skill-tag skill-tag--sub">dashboards</span>
+            <span class="skill-tag skill-tag--sub">data visualization</span>
+            <span class="skill-tag skill-tag--primary">Power BI</span>
+            <span class="skill-tag skill-tag--sub">dashboard development</span>
+            <span class="skill-tag skill-tag--sub">DAX</span>
+            <span class="skill-tag skill-tag--primary">R</span>
+            <span class="skill-tag skill-tag--sub">R Markdown</span>
+            <span class="skill-tag skill-tag--sub">data analysis</span>
+            <span class="skill-tag skill-tag--sub">technical reporting</span>
+          </div>
+        </div>
+
+        <div class="skill-group reveal-item" data-delay="60">
+          <h3 class="skill-group-title">Data Analytics &amp; Methods</h3>
+          <div class="skill-tags">
+            <span class="skill-tag skill-tag--primary">Data Cleaning &amp; Transformation</span>
+            <span class="skill-tag skill-tag--sub">ETL concepts</span>
+            <span class="skill-tag skill-tag--primary">Exploratory Data Analysis</span>
+            <span class="skill-tag skill-tag--sub">EDA</span>
+            <span class="skill-tag skill-tag--primary">Data Visualization &amp; Dashboarding</span>
+            <span class="skill-tag skill-tag--primary">KPI Development</span>
+            <span class="skill-tag skill-tag--sub">performance metrics</span>
+            <span class="skill-tag skill-tag--primary">Statistical Analysis</span>
+            <span class="skill-tag skill-tag--sub">basic regression</span>
+            <span class="skill-tag skill-tag--sub">distributions</span>
+            <span class="skill-tag skill-tag--primary">Data Modeling</span>
+            <span class="skill-tag skill-tag--sub">Dimensional Modeling</span>
+            <span class="skill-tag skill-tag--sub">Relational Modeling</span>
+          </div>
+        </div>
+
+        <div class="skill-group reveal-item" data-delay="120">
+          <h3 class="skill-group-title">Other Tools</h3>
+          <div class="skill-tags">
+            <span class="skill-tag skill-tag--primary">Git &amp; GitHub</span>
+            <span class="skill-tag skill-tag--sub">version control</span>
+            <span class="skill-tag skill-tag--primary">Relational Database Design</span>
+            <span class="skill-tag skill-tag--primary">Data Entry &amp; Validation</span>
+            <span class="skill-tag skill-tag--primary">POS &amp; Inventory Systems</span>
+          </div>
+        </div>
+
+        <div class="skill-group reveal-item" data-delay="180">
+          <h3 class="skill-group-title">Core Competencies</h3>
+          <div class="skill-tags">
+            <span class="skill-tag skill-tag--primary">Analytical Thinking &amp; Problem Solving</span>
+            <span class="skill-tag skill-tag--primary">Data Interpretation &amp; Communication</span>
+            <span class="skill-tag skill-tag--primary">Attention to Detail</span>
+            <span class="skill-tag skill-tag--primary">Cross-Functional Collaboration</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="certifications reveal-item">
+        <h3 class="cert-heading">Certifications</h3>
+        <div class="cert-list" role="list">
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">IBM Intro to Data Analytics</span>
+            <span class="cert-date">2025</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Excel for Data Analytics</span>
+            <span class="cert-date">2025</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">SQL for Data Analytics</span>
+            <span class="cert-date">2025</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">SQL+ for Data Analytics</span>
+            <span class="cert-date">2026</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Power BI for Data Analytics</span>
+            <span class="cert-date">2026</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">CompTIA IT Fundamentals (ITF+)</span>
+            <span class="cert-date">&nbsp;</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">IC3 GS6 Level 1 &amp; Level 2</span>
+            <span class="cert-date">&nbsp;</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Global Career Accelerator: Data Analysis (Excel)</span>
+            <span class="cert-date">Mar 2026</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Global Career Accelerator: Data Visualization (Tableau)</span>
+            <span class="cert-date">May 2026</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Global Career Accelerator: AI Professional Skills</span>
+            <span class="cert-date">May 2026</span>
+          </div>
+          <div class="cert-item" role="listitem">
+            <span class="cert-name">Global Career Accelerator: Intercultural Skills</span>
+            <span class="cert-date">May 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ EXPERIENCE ═══════════════════════ -->
+  <section id="experience" class="section" aria-labelledby="experience-heading">
+    <div class="container">
+      <h2 class="section-heading reveal-item" id="experience-heading">Experience</h2>
+      <div class="timeline">
+
+        <div class="timeline-entry reveal-item" data-delay="0">
+          <div class="tl-header">
+            <div class="tl-title-row">
+              <span class="tl-role">AI Trainer</span>
+            </div>
+            <div class="tl-meta">
+              <span class="tl-org">Handshake AI Research Program</span>
+              <span class="tl-date">Feb 2025 – May 2026</span>
+            </div>
+          </div>
+          <ul class="tl-bullets">
+            <li>Evaluated large language model outputs using structured evaluation frameworks to assess accuracy and reasoning quality</li>
+            <li>Analyzed response patterns across multiple prompts to identify inconsistencies and improve model performance</li>
+            <li>Applied analytical thinking and attention to detail in high-volume evaluation workflows</li>
+          </ul>
+        </div>
+
+        <div class="timeline-entry timeline-entry--featured reveal-item" data-delay="60">
+          <div class="tl-header">
+            <div class="tl-title-row">
+              <span class="tl-role">Co-Founder &amp; Operations Lead</span>
+              <span class="badge badge--founder">Founder</span>
+            </div>
+            <div class="tl-meta">
+              <span class="tl-org">Bridgly</span>
+              <span class="tl-date">Early-stage venture</span>
+            </div>
+          </div>
+          <ul class="tl-bullets">
+            <li>Led data validation and organization of operational datasets to ensure accuracy and usability</li>
+            <li>Coordinated workflows and managed data processes to support platform functionality</li>
+            <li>Contributed to early-stage data structuring and process optimization</li>
+          </ul>
+        </div>
+
+        <div class="timeline-entry reveal-item" data-delay="120">
+          <div class="tl-header">
+            <div class="tl-title-row">
+              <span class="tl-role">Front Desk &amp; Customer Data Specialist</span>
+            </div>
+            <div class="tl-meta">
+              <span class="tl-org">Fit Right Kid's Shoes</span>
+              <span class="tl-date">Nov 2024 – Jan 2026</span>
+            </div>
+          </div>
+          <ul class="tl-bullets">
+            <li>Maintained and validated customer data using POS and scheduling systems</li>
+            <li>Ensured data accuracy and consistency for operational efficiency</li>
+            <li>Collaborated with team members to improve data reliability in scheduling workflows</li>
+          </ul>
+        </div>
+
+        <div class="timeline-entry reveal-item" data-delay="180">
+          <div class="tl-header">
+            <div class="tl-title-row">
+              <span class="tl-role">Inventory Specialist</span>
+            </div>
+            <div class="tl-meta">
+              <span class="tl-org">Fit Right Kid's Shoes</span>
+              <span class="tl-date">Sep 2022 – Aug 2024</span>
+            </div>
+          </div>
+          <ul class="tl-bullets">
+            <li>Managed and tracked inventory data across 100+ items using POS systems</li>
+            <li>Ensured data accuracy through validation and consistent data entry processes</li>
+            <li>Supported inventory analytics by organizing and updating product records</li>
+          </ul>
+        </div>
+
+        <div class="timeline-entry reveal-item" data-delay="240">
+          <div class="tl-header">
+            <div class="tl-title-row">
+              <span class="tl-role">Volunteer</span>
+            </div>
+            <div class="tl-meta">
+              <span class="tl-org">Resourceful Women's Thrift Store</span>
+              <span class="tl-date">2021 – Aug 2025</span>
+            </div>
+          </div>
+          <ul class="tl-bullets">
+            <li>Supported inventory organization and donation tracking to improve operational efficiency</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ RESUME ═══════════════════════ -->
+  <section id="resume" class="section" aria-labelledby="resume-heading">
+    <div class="container">
+      <div class="resume-top reveal-item">
+        <h2 class="section-heading" id="resume-heading">Resume</h2>
+        <a href="Vaughn Edwards Jr - Resume (da).pdf"
+           download="Vaughn_Edwards_Jr_Resume.pdf"
+           class="dl-btn"
+           aria-label="Download resume as PDF">
+          Download PDF
+        </a>
+      </div>
+      <div class="resume-viewer reveal-item" data-delay="60">
+        <iframe
+          src="Vaughn Edwards Jr - Resume (da).pdf#view=FitH"
+          title="Vaughn Edwards Jr. Resume — PDF viewer"
+          class="resume-iframe"
+          loading="lazy">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-name">Vaughn Edwards Jr.</span>
+      <div class="footer-links">
+        <a href="mailto:vj09@icloud.com">vj09@icloud.com</a>
+        <a href="tel:7038517927">703-851-7927</a>
+        <a href="https://www.linkedin.com/in/vaughn-edwards-jr/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://github.com/vledwardsjr" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" aria-hidden="true">
+  <button class="lightbox-close" aria-label="Close image viewer">&times;</button>
+  <img alt="">
+  <div class="lightbox-caption"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

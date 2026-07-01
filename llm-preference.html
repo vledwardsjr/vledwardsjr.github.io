@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Response Preference Predictor — Vaughn Edwards Jr.</title>
+  <meta name="description" content="In-progress case study: Building a machine learning model to predict human preference between AI responses using the Chatbot Arena dataset, NLP feature engineering, and a pairwise classification architecture.">
+  <meta property="og:title" content="LLM Response Preference Predictor — Vaughn Edwards Jr.">
+  <meta property="og:description" content="Can a model trained on measurable textual features predict which of two AI responses a human will prefer? A pairwise ML classifier built on the LMSYS Chatbot Arena dataset.">
+  <meta property="og:type" content="article">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ── */
+    :root {
+      --bg:             oklch(0.08  0.000   0);
+      --surface:        oklch(0.13  0.007 285);
+      --surface-raised: oklch(0.17  0.006 285);
+      --border:         oklch(0.25  0.010 285);
+      --border-faint:   oklch(0.19  0.007 285);
+      --ink:            oklch(0.94  0.006 285);
+      --muted:          oklch(0.60  0.010 285);
+      --dim:            oklch(0.50  0.008 285);
+      --accent:         oklch(0.65  0.220 292);
+      --accent-hover:   oklch(0.55  0.185 292);
+      --accent-bg:      oklch(0.65  0.220 292 / 0.12);
+      --accent-glow:    oklch(0.65  0.220 292 / 0.22);
+      --support:        oklch(0.78  0.090 265);
+      --support-bg:     oklch(0.78  0.090 265 / 0.12);
+
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+      --font-body: 'Figtree', 'Inter', system-ui, sans-serif;
+
+      --text-xs:   clamp(0.72rem, 0.68rem + 0.20vw, 0.80rem);
+      --text-sm:   clamp(0.85rem, 0.80rem + 0.26vw, 0.95rem);
+      --text-base: clamp(1.00rem, 0.95rem + 0.26vw, 1.10rem);
+      --text-lg:   clamp(1.15rem, 1.05rem + 0.50vw, 1.40rem);
+      --text-xl:   clamp(1.40rem, 1.20rem + 1.00vw, 1.90rem);
+      --text-2xl:  clamp(1.90rem, 1.50rem + 2.00vw, 2.80rem);
+      --text-hero: clamp(2.60rem, 1.60rem + 5.00vw, 5.20rem);
+
+      --sp-1: 0.25rem; --sp-2: 0.50rem; --sp-3: 0.75rem; --sp-4: 1.00rem;
+      --sp-6: 1.50rem; --sp-8: 2.00rem; --sp-12: 3.00rem; --sp-16: 4.00rem;
+      --sp-24: 6.00rem;
+
+      --r-sm: 4px; --r-md: 8px; --r-lg: 12px;
+      --nav-h: 52px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: calc(var(--nav-h) + 20px);
+      color-scheme: dark;
+    }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4 {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      line-height: 1.15;
+      text-wrap: balance;
+      letter-spacing: -0.03em;
+    }
+    p { text-wrap: pretty; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+    img { display: block; max-width: 100%; }
+    button { background: none; border: none; cursor: pointer; font: inherit; padding: 0; }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: var(--r-sm);
+    }
+
+    /* ── Dot-grid background ── */
+    .page-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='14' cy='14' r='1.2' fill='%23ffffff' fill-opacity='0.06'/%3E%3C/svg%3E");
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, oklch(1 0 0) 0%, transparent 60%);
+      -webkit-mask-image: linear-gradient(to bottom, oklch(1 0 0) 0%, transparent 60%);
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: clamp(var(--sp-4), 5vw, var(--sp-16));
+    }
+    .section {
+      padding-block: var(--sp-24);
+      position: relative;
+      z-index: 1;
+    }
+    .section + .section {
+      border-top: 1px solid var(--border-faint);
+    }
+    .section-heading {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.04em;
+      margin-bottom: var(--sp-12);
+    }
+
+    /* ── Nav ── */
+    .case-nav {
+      position: fixed;
+      top: 0;
+      inset-inline: 0;
+      height: var(--nav-h);
+      background: oklch(0.06 0.000 0 / 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-faint);
+      z-index: 200;
+      transition: border-color 0.3s ease;
+    }
+    .case-nav--scrolled { border-bottom-color: var(--border); }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+      height: 100%;
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: clamp(var(--sp-4), 5vw, var(--sp-16));
+    }
+    .nav-back {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-right: auto;
+      transition: color 0.15s;
+      padding: var(--sp-1) var(--sp-2);
+      border-radius: var(--r-sm);
+    }
+    .nav-back:hover { color: var(--accent); }
+    .nav-back svg { width: 14px; height: 14px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-1);
+    }
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--dim);
+      padding: var(--sp-2) var(--sp-3);
+      border-radius: var(--r-sm);
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-link:hover { color: var(--ink); background: var(--support-bg); }
+    .nav-link.active { color: var(--accent); background: var(--accent-bg); }
+
+    .nav-mobile-btn {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: var(--sp-2);
+      border-radius: var(--r-sm);
+    }
+    .nav-mobile-btn span {
+      display: block; width: 20px; height: 2px;
+      background: var(--muted); border-radius: 2px;
+      transition: transform 0.2s, opacity 0.2s, background 0.2s;
+    }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg); background: var(--ink);
+    }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg); background: var(--ink);
+    }
+
+    .mobile-menu {
+      display: none;
+      flex-direction: column;
+      padding: var(--sp-3) clamp(var(--sp-4), 5vw, var(--sp-16));
+      padding-bottom: var(--sp-4);
+      background: oklch(0.06 0.000 0);
+      border-bottom: 1px solid var(--border-faint);
+      position: fixed;
+      top: var(--nav-h);
+      inset-inline: 0;
+      z-index: 199;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--muted);
+      padding: var(--sp-3) 0;
+      border-bottom: 1px solid var(--border-faint);
+      transition: color 0.15s;
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a:hover, .mobile-menu a.active { color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero {
+      padding-top: calc(var(--nav-h) + var(--sp-24));
+      padding-bottom: var(--sp-16);
+      position: relative;
+      z-index: 1;
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-meta {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      letter-spacing: 0.04em;
+      margin-bottom: var(--sp-6);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+    }
+    .hero-meta-dot { color: var(--accent); }
+    .hero-title {
+      font-size: var(--text-hero);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      margin-bottom: var(--sp-6);
+    }
+    .hero-title-line1 { display: block; color: var(--ink); }
+    .hero-title-line2 { display: block; color: var(--accent); }
+
+    .hero-status-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-3);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--accent);
+      padding: var(--sp-2) var(--sp-4);
+      background: var(--accent-bg);
+      border: 1px solid oklch(0.65 0.220 292 / 0.25);
+      border-radius: var(--r-sm);
+      margin-bottom: var(--sp-8);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      animation: status-pulse 2s ease infinite;
+    }
+    @keyframes status-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .hero-thesis {
+      font-size: var(--text-lg);
+      color: var(--muted);
+      max-width: 64ch;
+      line-height: 1.65;
+      margin-bottom: var(--sp-8);
+      font-style: italic;
+    }
+    .hero-thesis strong {
+      color: var(--ink);
+      font-weight: 500;
+      font-style: normal;
+    }
+    .tech-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-6);
+    }
+    .tech-tag {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 3px var(--sp-3);
+      letter-spacing: 0.01em;
+    }
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--accent);
+      padding: var(--sp-2) var(--sp-6);
+      border: 1px solid var(--accent);
+      border-radius: var(--r-sm);
+      transition: background 0.18s, transform 0.15s;
+    }
+    .repo-link:hover {
+      background: var(--accent-bg);
+      transform: translateY(-1px);
+    }
+
+    /* ── Stat Row ── */
+    .stat-row {
+      display: flex;
+      justify-content: flex-start;
+      gap: clamp(var(--sp-8), 6vw, var(--sp-16));
+      flex-wrap: wrap;
+      margin-bottom: var(--sp-12);
+      padding: var(--sp-8);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .stat-number {
+      font-family: var(--font-mono);
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stat-number--sm {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+    }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-top: var(--sp-1);
+    }
+
+    /* ── Overview Grid ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--sp-6);
+    }
+    .overview-card {
+      padding: var(--sp-6);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+      border-left: 3px solid var(--accent);
+    }
+    .overview-card h3 {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+      margin-bottom: var(--sp-3);
+    }
+    .overview-card p, .overview-card ul {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .overview-card ul { padding-left: var(--sp-4); }
+    .overview-card li {
+      position: relative;
+      padding-bottom: var(--sp-2);
+    }
+    .overview-card li::before {
+      content: '–';
+      position: absolute;
+      left: calc(-1 * var(--sp-4));
+      color: var(--dim);
+    }
+    .overview-card strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* ── Phase Roadmap ── */
+    .phase-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .phase-item {
+      padding: var(--sp-6);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-left: 3px solid var(--border-faint);
+      border-radius: var(--r-lg);
+      transition: border-color 0.2s;
+    }
+
+    .phase-item--active {
+      border-color: var(--accent);
+      border-left-color: var(--accent);
+      background: oklch(0.65 0.220 292 / 0.05);
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-4);
+    }
+
+    .phase-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dim);
+      padding-top: 3px;
+    }
+    .phase-item--active .phase-label { color: var(--accent); }
+
+    .phase-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--dim);
+      letter-spacing: -0.02em;
+      flex: 1;
+    }
+    .phase-item--active .phase-title { color: var(--ink); }
+
+    .phase-badge {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      padding: 2px var(--sp-2);
+      border-radius: var(--r-sm);
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+    .phase-badge--active {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid oklch(0.65 0.220 292 / 0.30);
+    }
+    .phase-badge--upcoming {
+      background: transparent;
+      color: var(--dim);
+      border: 1px solid var(--border-faint);
+    }
+
+    .phase-bullets {
+      padding-left: var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .phase-bullets li {
+      font-size: var(--text-sm);
+      color: var(--dim);
+      line-height: 1.65;
+      position: relative;
+    }
+    .phase-bullets li::before {
+      content: '–';
+      position: absolute;
+      left: calc(-1 * var(--sp-4));
+      color: var(--border);
+    }
+    .phase-item--active .phase-bullets li { color: var(--muted); }
+    .phase-item--active .phase-bullets li::before { color: var(--dim); }
+
+    .phase-challenge {
+      margin-top: var(--sp-4);
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--surface-raised);
+      border-radius: var(--r-sm);
+      border-left: 2px solid var(--support);
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    .phase-challenge strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* ── Tech Stack ── */
+    .techstack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--sp-6);
+    }
+    .techstack-card {
+      padding: var(--sp-6);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+    }
+    .techstack-card h3 {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: var(--sp-4);
+    }
+    .tech-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+    }
+    .tech-pill {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 3px var(--sp-3);
+      letter-spacing: 0.01em;
+    }
+    .tech-pill--sub {
+      color: var(--muted);
+      background: transparent;
+      border-color: var(--border-faint);
+    }
+
+    /* ── Footer ── */
+    .case-footer {
+      border-top: 1px solid var(--border-faint);
+      padding-block: var(--sp-8);
+      background: oklch(0.06 0.000 0);
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-4);
+    }
+    .footer-name {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-4);
+    }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── Reveal Animations ── */
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+      .hero-content {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .hero-content.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 740px) {
+      .nav-links { display: none; }
+      .nav-mobile-btn { display: flex; }
+    }
+    @media (max-width: 680px) {
+      .stat-row { gap: var(--sp-6); }
+      .overview-grid,
+      .techstack-grid { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 460px) {
+      .hero-title { font-size: clamp(2.2rem, 10vw, 3rem); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg" aria-hidden="true"></div>
+
+<!-- ═══ NAV ═══ -->
+<nav class="case-nav" id="case-nav" role="navigation" aria-label="Case study navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-back" aria-label="Back to portfolio">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      Portfolio
+    </a>
+    <div class="nav-links">
+      <a href="#overview"  class="nav-link" data-section="overview">Overview</a>
+      <a href="#roadmap"   class="nav-link" data-section="roadmap">Roadmap</a>
+      <a href="#techstack" class="nav-link" data-section="techstack">Tech Stack</a>
+    </div>
+    <button class="nav-mobile-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="case-mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="case-mobile-menu" aria-hidden="true">
+    <a href="#overview"  data-section="overview">Overview</a>
+    <a href="#roadmap"   data-section="roadmap">Roadmap</a>
+    <a href="#techstack" data-section="techstack">Tech Stack</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <div class="hero-content" id="hero-content">
+        <div class="hero-meta" aria-hidden="true">
+          <span>Solo project</span>
+          <span class="hero-meta-dot">·</span>
+          <span>In Progress</span>
+          <span class="hero-meta-dot">·</span>
+          <span>Est. July 20, 2025</span>
+        </div>
+        <h1 class="hero-title" id="hero-title">
+          <span class="hero-title-line1">LLM Response</span>
+          <span class="hero-title-line2">Preference Predictor</span>
+        </h1>
+        <div class="hero-status-bar" role="status" aria-label="Project status: In Progress, Phase 1 of 5 active">
+          <span class="status-dot" aria-hidden="true"></span>
+          In Progress &mdash; Phase 1 of 5 Active &mdash; Est. Completion: July 20, 2025
+        </div>
+        <p class="hero-thesis">
+          &ldquo;Can a model trained on measurable textual features predict which of two AI responses a human will prefer &mdash; and which specific signals &mdash; <strong>structural flow</strong> and <strong>response specificity</strong> &mdash; actually drive that preference?&rdquo;
+        </p>
+        <div class="tech-tags" aria-label="Technologies used">
+          <span class="tech-tag">Python</span>
+          <span class="tech-tag">pandas</span>
+          <span class="tech-tag">Jupyter</span>
+          <span class="tech-tag">nltk</span>
+          <span class="tech-tag">spaCy</span>
+          <span class="tech-tag">scikit-learn</span>
+          <span class="tech-tag">XGBoost</span>
+          <span class="tech-tag">Streamlit</span>
+          <span class="tech-tag">GitHub</span>
+        </div>
+        <a href="https://github.com/vledwardsjr/LLM-Response-Preference-Project"
+           class="repo-link"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="View LLM Response Preference Project repository on GitHub">
+          View Repository <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <section id="overview" class="section" aria-labelledby="overview-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="overview-heading">The Research Question</h2>
+
+      <div class="stat-row reveal">
+        <div class="stat-item">
+          <span class="stat-number">5</span>
+          <span class="stat-label">Project Phases</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">1</span>
+          <span class="stat-label">Current Phase</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number stat-number--sm">Jul 20</span>
+          <span class="stat-label">Est. Completion</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number stat-number--sm">LMSYS</span>
+          <span class="stat-label">Dataset Source</span>
+        </div>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card reveal">
+          <h3>Research Question</h3>
+          <p>Can a model trained on measurable textual features predict which of two AI responses a human will prefer? And do specific signals &mdash; <strong>structural flow</strong> and <strong>response specificity</strong> &mdash; reliably drive that preference, or is human judgment too subjective to learn from?</p>
+        </div>
+        <div class="overview-card reveal">
+          <h3>Motivation</h3>
+          <p>This project is directly motivated by professional experience as an AI output evaluator. In close preference decisions between two strong responses, the deciding factor consistently came down to two signals: how well the response was structured, and how specific (vs. vague) its content was. This project formalizes and quantifies those intuitions &mdash; testing whether a machine can learn what an experienced human evaluator already knows.</p>
+        </div>
+        <div class="overview-card reveal">
+          <h3>Dataset</h3>
+          <p><strong>Chatbot Arena Human Preference Dataset</strong> by LMSYS, sourced from Hugging Face. Contains real-world human votes on which of two AI-generated responses was preferred. Each record includes:</p>
+          <ul>
+            <li>A user prompt</li>
+            <li>Response A and Response B from two different LLMs</li>
+            <li>A human winner vote (A wins, B wins, or tie)</li>
+          </ul>
+        </div>
+        <div class="overview-card reveal">
+          <h3>Connection to RLHF</h3>
+          <p>This project mirrors the structure of real-world <strong>Reinforcement Learning from Human Feedback (RLHF)</strong> pipelines: collect human preference data, extract signals, and train a reward model. The pairwise classification architecture &mdash; featurizing both responses and comparing them before classification &mdash; is a direct analogue of how preference reward models are built in production AI systems.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ROADMAP ═══ -->
+  <section id="roadmap" class="section" aria-labelledby="roadmap-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="roadmap-heading">Project Roadmap</h2>
+
+      <div class="phase-list">
+
+        <!-- Phase 1 — ACTIVE -->
+        <div class="phase-item phase-item--active reveal" aria-current="step">
+          <div class="phase-header">
+            <span class="phase-label">Phase 1</span>
+            <span class="phase-title">Data Acquisition &amp; EDA</span>
+            <span class="phase-badge phase-badge--active">Current Phase</span>
+          </div>
+          <ul class="phase-bullets">
+            <li>Load and inspect the Chatbot Arena dataset from Hugging Face</li>
+            <li>Explore vote distribution, response length patterns, and label balance</li>
+            <li>Surface potential confounds &mdash; e.g., does response length alone predict the winner regardless of quality?</li>
+          </ul>
+        </div>
+
+        <!-- Phase 2 — UPCOMING -->
+        <div class="phase-item reveal">
+          <div class="phase-header">
+            <span class="phase-label">Phase 2</span>
+            <span class="phase-title">Feature Engineering</span>
+            <span class="phase-badge phase-badge--upcoming">Upcoming</span>
+          </div>
+          <ul class="phase-bullets">
+            <li>Translate qualitative signals (structural flow, specificity / vagueness) into computable numeric features</li>
+            <li>Engineer pairwise features: difference scores between Response A and B on each signal</li>
+            <li>Validate that engineered features are independent of raw length (to avoid confounding with the length bias surfaced in EDA)</li>
+          </ul>
+          <div class="phase-challenge">
+            <strong>Key challenge:</strong> converting fuzzy human judgment into measurable, computable input a model can learn from &mdash; without losing the signal that makes those features meaningful.
+          </div>
+        </div>
+
+        <!-- Phase 3 — UPCOMING -->
+        <div class="phase-item reveal">
+          <div class="phase-header">
+            <span class="phase-label">Phase 3</span>
+            <span class="phase-title">Modeling</span>
+            <span class="phase-badge phase-badge--upcoming">Upcoming</span>
+          </div>
+          <ul class="phase-bullets">
+            <li>Logistic Regression baseline &mdash; establishes interpretability floor and a reference accuracy to beat</li>
+            <li>Random Forest and XGBoost for improved predictive performance</li>
+            <li>Pairwise input architecture: both responses featurized and compared before binary classification</li>
+          </ul>
+        </div>
+
+        <!-- Phase 4 — UPCOMING -->
+        <div class="phase-item reveal">
+          <div class="phase-header">
+            <span class="phase-label">Phase 4</span>
+            <span class="phase-title">Evaluation &amp; Error Analysis</span>
+            <span class="phase-badge phase-badge--upcoming">Upcoming</span>
+          </div>
+          <ul class="phase-bullets">
+            <li>Metrics: accuracy, precision, recall, F1, ROC-AUC</li>
+            <li>Feature importance analysis &mdash; which signals actually drove model predictions, and how closely do they match the original hypothesis?</li>
+            <li>Error analysis: where and why the model disagrees with human raters, and what that reveals about the limits of automating evaluation</li>
+          </ul>
+        </div>
+
+        <!-- Phase 5 — UPCOMING -->
+        <div class="phase-item reveal">
+          <div class="phase-header">
+            <span class="phase-label">Phase 5</span>
+            <span class="phase-title">Delivery</span>
+            <span class="phase-badge phase-badge--upcoming">Upcoming</span>
+          </div>
+          <ul class="phase-bullets">
+            <li>Streamlit interactive demo &mdash; paste two AI responses, receive a prediction and explanation of which wins and why</li>
+            <li>Written findings and methodology report covering the full pipeline and key results</li>
+            <li>Polished GitHub repository with complete documentation</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <section id="techstack" class="section" aria-labelledby="techstack-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="techstack-heading">Tools &amp; Technologies</h2>
+
+      <div class="techstack-grid">
+
+        <div class="techstack-card reveal">
+          <h3>Data &amp; EDA</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">Python</span>
+            <span class="tech-pill">pandas</span>
+            <span class="tech-pill">Jupyter Notebook</span>
+          </div>
+        </div>
+
+        <div class="techstack-card reveal">
+          <h3>NLP Feature Engineering</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">nltk</span>
+            <span class="tech-pill">spaCy</span>
+          </div>
+        </div>
+
+        <div class="techstack-card reveal">
+          <h3>Modeling</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">scikit-learn</span>
+            <span class="tech-pill">XGBoost</span>
+            <span class="tech-pill tech-pill--sub">Logistic Regression</span>
+            <span class="tech-pill tech-pill--sub">Random Forest</span>
+          </div>
+        </div>
+
+        <div class="techstack-card reveal">
+          <h3>Evaluation &amp; Visualization</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">scikit-learn</span>
+            <span class="tech-pill">matplotlib</span>
+            <span class="tech-pill">seaborn</span>
+          </div>
+        </div>
+
+        <div class="techstack-card reveal">
+          <h3>Interactive Demo</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">Streamlit</span>
+          </div>
+        </div>
+
+        <div class="techstack-card reveal">
+          <h3>Version Control</h3>
+          <div class="tech-pills">
+            <span class="tech-pill">Git</span>
+            <span class="tech-pill">GitHub</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="case-footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-name">Vaughn Edwards Jr.</span>
+      <div class="footer-links">
+        <a href="index.html">Portfolio</a>
+        <a href="https://github.com/vledwardsjr/LLM-Response-Preference-Project" target="_blank" rel="noopener noreferrer">Repository</a>
+        <a href="https://www.linkedin.com/in/vaughn-edwards-jr/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://github.com/vledwardsjr" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!prefersReduced) {
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var delay = parseInt(entry.target.dataset.delay) || 0;
+          setTimeout(function() {
+            entry.target.classList.add('is-visible');
+          }, delay);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal, .hero-content').forEach(function(el) {
+      revealObserver.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal, .hero-content').forEach(function(el) {
+      el.classList.add('is-visible');
+    });
+  }
+
+  var nav = document.getElementById('case-nav');
+  var sections = document.querySelectorAll('.section[id], .hero');
+  var navLinks = document.querySelectorAll('.nav-link, .mobile-menu a');
+
+  function updateScrollSpy() {
+    var scrollY = window.scrollY + 100;
+
+    if (scrollY > 60) {
+      nav.classList.add('case-nav--scrolled');
+    } else {
+      nav.classList.remove('case-nav--scrolled');
+    }
+
+    var current = '';
+    sections.forEach(function(section) {
+      if (section.offsetTop <= scrollY) {
+        current = section.id || '';
+      }
+    });
+
+    navLinks.forEach(function(link) {
+      if (link.dataset.section === current) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  var scrollTicking = false;
+  window.addEventListener('scroll', function() {
+    if (!scrollTicking) {
+      requestAnimationFrame(function() {
+        updateScrollSpy();
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+  updateScrollSpy();
+
+  var mobileBtn = document.querySelector('.nav-mobile-btn');
+  var mobileMenu = document.getElementById('case-mobile-menu');
+
+  if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener('click', function() {
+      var isOpen = mobileBtn.getAttribute('aria-expanded') === 'true';
+      mobileBtn.setAttribute('aria-expanded', !isOpen);
+      mobileMenu.setAttribute('aria-hidden', isOpen);
+      mobileMenu.classList.toggle('open');
+    });
+
+    mobileMenu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        mobileBtn.setAttribute('aria-expanded', 'false');
+        mobileMenu.setAttribute('aria-hidden', 'true');
+        mobileMenu.classList.remove('open');
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
