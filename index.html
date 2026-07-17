@@ -116,8 +116,48 @@
         <button class="filter-tag" data-filter="pivottables">PivotTables</button>
         <button class="filter-tag" data-filter="tableau">Tableau</button>
         <button class="filter-tag" data-filter="dataviz">Data Visualization</button>
+        <button class="filter-tag" data-filter="python">Python</button>
+        <button class="filter-tag" data-filter="ml">Machine Learning</button>
+        <button class="filter-tag" data-filter="aws">AWS</button>
       </div>
       <div class="projects-list">
+
+        <article class="project-panel project-panel--linked reveal-item" data-tags="python ml aws sql" aria-labelledby="proj0-title">
+          <div class="project-header">
+            <div class="project-title-row">
+              <h3 class="project-title" id="proj0-title">LLM Cost/Latency Router</h3>
+              <span class="project-status project-status--progress" aria-label="Status: In Progress">In Progress</span>
+            </div>
+            <div class="project-tools" aria-label="Tools used">
+              <span class="tool-tag">Python</span>
+              <span class="tool-tag">scikit-learn</span>
+              <span class="tool-tag">XGBoost</span>
+              <span class="tool-tag">SHAP</span>
+              <span class="tool-tag">AWS Lambda</span>
+              <span class="tool-tag">DynamoDB</span>
+            </div>
+            <span class="project-date">In Progress &mdash; 2026</span>
+          </div>
+          <ul class="project-bullets">
+            <li>Building a classical ML classifier that predicts whether a cheap/fast LLM is sufficient for a query &mdash; without calling either model first &mdash; to make cost-vs-quality routing a deliberate decision instead of a default</li>
+            <li>Constructing a labeled dataset by scoring dual small/large-model outputs with an LLM-judge, validated against a hand-scored sample before trusting it at scale</li>
+            <li>Targeting a cost-savings-vs-quality-loss Pareto frontier as the core deliverable, deployed as a real-time routing endpoint on AWS Lambda, API Gateway, and DynamoDB</li>
+          </ul>
+          <div class="project-actions">
+            <a href="llm-router-project.html"
+               class="project-case-link"
+               aria-label="View LLM Cost/Latency Router case study">
+              View Case Study <span aria-hidden="true">→</span>
+            </a>
+            <a href="https://github.com/vledwardsjr/LLM-Router-Project"
+               class="project-repo-link"
+               target="_blank"
+               rel="noopener noreferrer"
+               aria-label="View LLM Router Project on GitHub">
+              View on GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </article>
 
         <article class="project-panel project-panel--linked reveal-item" data-tags="postgresql excel powerbi r" aria-labelledby="proj1-title">
           <div class="project-header">

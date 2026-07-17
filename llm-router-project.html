@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Cost/Latency Router — Vaughn Edwards Jr.</title>
+  <meta name="description" content="Case study: A classical ML classifier that routes LLM queries to a cheap or expensive model based on query-level features alone, targeting a cost-savings-vs-quality-loss Pareto frontier.">
+  <meta property="og:title" content="LLM Cost/Latency Router — Vaughn Edwards Jr.">
+  <meta property="og:description" content="A classifier that predicts whether a cheap LLM is good enough for a query, before either model is called, built with scikit-learn, XGBoost, and AWS.">
+  <meta property="og:type" content="article">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ── */
+    :root {
+      --bg:             oklch(0.08  0.000   0);
+      --surface:        oklch(0.13  0.007 285);
+      --surface-raised: oklch(0.17  0.006 285);
+      --border:         oklch(0.25  0.010 285);
+      --border-faint:   oklch(0.19  0.007 285);
+      --ink:            oklch(0.94  0.006 285);
+      --muted:          oklch(0.60  0.010 285);
+      --dim:            oklch(0.50  0.008 285);
+      --accent:         oklch(0.65  0.220 292);
+      --accent-hover:   oklch(0.55  0.185 292);
+      --accent-bg:      oklch(0.65  0.220 292 / 0.12);
+      --accent-glow:    oklch(0.65  0.220 292 / 0.22);
+      --support:        oklch(0.78  0.090 265);
+      --support-bg:     oklch(0.78  0.090 265 / 0.12);
+      --warn:           oklch(0.75  0.150 85);
+      --warn-bg:        oklch(0.75  0.150 85 / 0.12);
+
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+      --font-body: 'Figtree', 'Inter', system-ui, sans-serif;
+
+      --text-xs:   clamp(0.72rem, 0.68rem + 0.20vw, 0.80rem);
+      --text-sm:   clamp(0.85rem, 0.80rem + 0.26vw, 0.95rem);
+      --text-base: clamp(1.00rem, 0.95rem + 0.26vw, 1.10rem);
+      --text-lg:   clamp(1.15rem, 1.05rem + 0.50vw, 1.40rem);
+      --text-xl:   clamp(1.40rem, 1.20rem + 1.00vw, 1.90rem);
+      --text-2xl:  clamp(1.90rem, 1.50rem + 2.00vw, 2.80rem);
+      --text-hero: clamp(2.60rem, 1.60rem + 5.00vw, 5.20rem);
+
+      --sp-1: 0.25rem; --sp-2: 0.50rem; --sp-3: 0.75rem; --sp-4: 1.00rem;
+      --sp-6: 1.50rem; --sp-8: 2.00rem; --sp-12: 3.00rem; --sp-16: 4.00rem;
+      --sp-24: 6.00rem;
+
+      --r-sm: 4px; --r-md: 8px; --r-lg: 12px;
+      --nav-h: 52px;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: calc(var(--nav-h) + 20px);
+      color-scheme: dark;
+    }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── Routing Diagram Background ── */
+    .bg-route-full {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .bg-route-full svg {
+      width: 140%;
+      max-width: 1800px;
+      height: auto;
+      opacity: 0.025;
+      transform: rotate(-6deg) translateY(-5%);
+    }
+    h1, h2, h3, h4 {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      line-height: 1.15;
+      text-wrap: balance;
+      letter-spacing: -0.03em;
+    }
+    p { text-wrap: pretty; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+    img { display: block; max-width: 100%; }
+    button { background: none; border: none; cursor: pointer; font: inherit; padding: 0; text-align: left; }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: var(--r-sm);
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: clamp(var(--sp-4), 5vw, var(--sp-16));
+    }
+    .section {
+      padding-block: var(--sp-24);
+      position: relative;
+      z-index: 1;
+    }
+    .section + .section {
+      border-top: 1px solid var(--border-faint);
+    }
+    .section-heading {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.04em;
+      margin-bottom: var(--sp-12);
+    }
+
+    /* ── Nav ── */
+    .case-nav {
+      position: fixed;
+      top: 0;
+      inset-inline: 0;
+      height: var(--nav-h);
+      background: oklch(0.06 0.000 0 / 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-faint);
+      z-index: 200;
+      transition: border-color 0.3s ease;
+    }
+    .case-nav--scrolled { border-bottom-color: var(--border); }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+      height: 100%;
+      max-width: 1100px;
+      margin-inline: auto;
+      padding-inline: clamp(var(--sp-4), 5vw, var(--sp-16));
+    }
+    .nav-back {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-right: auto;
+      transition: color 0.15s;
+      padding: var(--sp-1) var(--sp-2);
+      border-radius: var(--r-sm);
+    }
+    .nav-back:hover { color: var(--accent); }
+    .nav-back svg { width: 14px; height: 14px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-1);
+    }
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--dim);
+      padding: var(--sp-2) var(--sp-3);
+      border-radius: var(--r-sm);
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-link:hover { color: var(--ink); background: var(--support-bg); }
+    .nav-link.active { color: var(--accent); background: var(--accent-bg); }
+
+    .nav-mobile-btn {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: var(--sp-2);
+      border-radius: var(--r-sm);
+    }
+    .nav-mobile-btn span {
+      display: block; width: 20px; height: 2px;
+      background: var(--muted); border-radius: 2px;
+      transition: transform 0.2s, opacity 0.2s, background 0.2s;
+    }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg); background: var(--ink);
+    }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+    .nav-mobile-btn[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg); background: var(--ink);
+    }
+
+    .mobile-menu {
+      display: none;
+      flex-direction: column;
+      padding: var(--sp-3) clamp(var(--sp-4), 5vw, var(--sp-16));
+      padding-bottom: var(--sp-4);
+      background: oklch(0.06 0.000 0);
+      border-bottom: 1px solid var(--border-faint);
+      position: fixed;
+      top: var(--nav-h);
+      inset-inline: 0;
+      z-index: 199;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--muted);
+      padding: var(--sp-3) 0;
+      border-bottom: 1px solid var(--border-faint);
+      transition: color 0.15s;
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a:hover, .mobile-menu a.active { color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero {
+      padding-top: calc(var(--nav-h) + var(--sp-24));
+      padding-bottom: var(--sp-16);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-meta {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      letter-spacing: 0.04em;
+      margin-bottom: var(--sp-6);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+    }
+    .hero-meta-dot { color: var(--accent); }
+    .hero-status {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--warn);
+      background: var(--warn-bg);
+      border: 1px solid oklch(0.75 0.150 85 / 0.30);
+      border-radius: var(--r-sm);
+      padding: 2px var(--sp-2);
+      letter-spacing: 0.02em;
+    }
+    .hero-title {
+      font-size: var(--text-hero);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      margin-bottom: var(--sp-8);
+    }
+    .hero-title-line1 { display: block; color: var(--ink); }
+    .hero-title-line2 { display: block; color: var(--accent); }
+    .hero-thesis {
+      font-size: var(--text-lg);
+      color: var(--muted);
+      max-width: 62ch;
+      line-height: 1.65;
+      margin-bottom: var(--sp-8);
+    }
+    .hero-thesis strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .tech-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-6);
+    }
+    .tech-tag {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 3px var(--sp-3);
+      letter-spacing: 0.01em;
+    }
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--accent);
+      padding: var(--sp-2) var(--sp-6);
+      border: 1px solid var(--accent);
+      border-radius: var(--r-sm);
+      transition: background 0.18s, transform 0.15s;
+    }
+    .repo-link:hover {
+      background: var(--accent-bg);
+      transform: translateY(-1px);
+    }
+
+    /* ── Status Banner ── */
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-4);
+      padding: var(--sp-6);
+      background: var(--warn-bg);
+      border: 1px solid oklch(0.75 0.150 85 / 0.25);
+      border-radius: var(--r-lg);
+      margin-bottom: var(--sp-12);
+    }
+    .status-banner-icon {
+      font-size: var(--text-lg);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .status-banner p {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    .status-banner strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ── Overview Grid ── */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--sp-6);
+      margin-bottom: var(--sp-8);
+    }
+    .overview-card {
+      padding: var(--sp-6);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+      border-left: 3px solid var(--accent);
+    }
+    .overview-card h3 {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+      margin-bottom: var(--sp-3);
+    }
+    .overview-card p, .overview-card ul {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .overview-card ul {
+      padding-left: var(--sp-4);
+    }
+    .overview-card li {
+      position: relative;
+      padding-bottom: var(--sp-2);
+    }
+    .overview-card li::before {
+      content: '–';
+      position: absolute;
+      left: calc(-1 * var(--sp-4));
+      color: var(--dim);
+    }
+    .overview-card li strong { color: var(--ink); font-weight: 500; }
+    .data-note {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      font-style: italic;
+      padding-top: var(--sp-4);
+      border-top: 1px solid var(--border-faint);
+    }
+
+    /* ── Roadmap Stepper ── */
+    .roadmap {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .roadmap-step {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: var(--sp-6);
+    }
+    .roadmap-step-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .roadmap-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--surface-raised);
+      border: 2px solid var(--dim);
+      flex-shrink: 0;
+      margin-top: 6px;
+      z-index: 1;
+    }
+    .roadmap-dot--active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-bg);
+    }
+    .roadmap-dot--done {
+      background: var(--support);
+      border-color: var(--support);
+    }
+    .roadmap-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      margin-top: 4px;
+    }
+    .roadmap-step:last-child .roadmap-line { display: none; }
+    .roadmap-body {
+      padding-bottom: var(--sp-8);
+    }
+    .roadmap-head {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-3);
+    }
+    .roadmap-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .status-pill {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      padding: 2px var(--sp-2);
+      border-radius: var(--r-sm);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .status-pill--progress {
+      color: var(--warn);
+      background: var(--warn-bg);
+      border: 1px solid oklch(0.75 0.150 85 / 0.30);
+    }
+    .status-pill--planned {
+      color: var(--dim);
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+    }
+    .roadmap-desc {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 68ch;
+      margin-bottom: var(--sp-3);
+    }
+    .roadmap-desc strong { color: var(--ink); font-weight: 500; }
+    .roadmap-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+    }
+
+    /* ── Principles Grid ── */
+    .principles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--sp-4);
+    }
+    .principle-item {
+      padding: var(--sp-6);
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+    }
+    .principle-name {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: var(--sp-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .principle-check {
+      color: var(--support);
+      font-weight: 700;
+      font-size: var(--text-base);
+    }
+    .principle-reason {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── Stack Table ── */
+    .stack-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+    }
+    .stack-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      min-width: 640px;
+    }
+    .stack-table th, .stack-table td {
+      text-align: left;
+      padding: var(--sp-4);
+      border-bottom: 1px solid var(--border-faint);
+      vertical-align: top;
+    }
+    .stack-table th {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      background: var(--surface);
+    }
+    .stack-table tr:last-child td { border-bottom: none; }
+    .stack-table td:first-child {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .stack-table td:nth-child(2) { color: var(--ink); }
+    .stack-table td:last-child { color: var(--muted); }
+
+    /* ── Structure Code Block ── */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border-faint);
+      border-radius: var(--r-lg);
+      padding: var(--sp-6);
+      overflow-x: auto;
+    }
+    .code-block pre {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.75;
+      color: var(--muted);
+      white-space: pre;
+    }
+    .code-block .cb-dir { color: var(--accent); }
+    .code-block .cb-comment { color: var(--dim); font-style: italic; }
+
+    /* ── Footer ── */
+    .case-footer {
+      border-top: 1px solid var(--border-faint);
+      padding-block: var(--sp-8);
+      background: oklch(0.06 0.000 0);
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-4);
+    }
+    .footer-name {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-4);
+    }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--dim);
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── Reveal Animations ── */
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+      .hero-content {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .hero-content.is-visible {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 740px) {
+      .nav-links { display: none; }
+      .nav-mobile-btn { display: flex; }
+    }
+
+    @media (max-width: 680px) {
+      .overview-grid,
+      .principles-grid {
+        grid-template-columns: 1fr;
+      }
+      .roadmap-step { grid-template-columns: 20px 1fr; gap: var(--sp-4); }
+      .roadmap-dot { width: 12px; height: 12px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 460px) {
+      .hero-title { font-size: clamp(2.2rem, 10vw, 3rem); }
+      .tech-tags { gap: var(--sp-1); }
+      .tech-tag { font-size: 0.68rem; padding: 2px var(--sp-2); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ BACKGROUND ═══ -->
+<div class="bg-route-full" aria-hidden="true">
+  <svg viewBox="0 0 940 500" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="90" cy="250" r="30"/>
+    <path d="M120 250 L 400 250"/>
+    <path d="M400 210 L 430 250 L 400 290 L 370 250 Z"/>
+    <path d="M430 235 L 720 130"/>
+    <path d="M430 265 L 720 370"/>
+    <circle cx="760" cy="120" r="45"/>
+    <circle cx="760" cy="380" r="65" stroke-dasharray="8 6"/>
+    <path d="M745 105 L 775 135 M775 105 L 745 135" stroke-width="1.2"/>
+    <path d="M730 355 L 790 405 M790 355 L 730 405" stroke-width="1.2"/>
+    <circle cx="90" cy="250" r="4" fill="white"/>
+    <circle cx="400" cy="250" r="4" fill="white"/>
+  </svg>
+</div>
+
+<!-- ═══ NAV ═══ -->
+<nav class="case-nav" id="case-nav" role="navigation" aria-label="Case study navigation">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-back" aria-label="Back to portfolio">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      Portfolio
+    </a>
+    <div class="nav-links">
+      <a href="#overview" class="nav-link" data-section="overview">Overview</a>
+      <a href="#roadmap" class="nav-link" data-section="roadmap">Roadmap</a>
+      <a href="#principles" class="nav-link" data-section="principles">Principles</a>
+      <a href="#stack" class="nav-link" data-section="stack">Tech Stack</a>
+    </div>
+    <button class="nav-mobile-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="case-mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="case-mobile-menu" aria-hidden="true">
+    <a href="#overview" data-section="overview">Overview</a>
+    <a href="#roadmap" data-section="roadmap">Roadmap</a>
+    <a href="#principles" data-section="principles">Principles</a>
+    <a href="#stack" data-section="stack">Tech Stack</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <div class="hero-content" id="hero-content">
+        <div class="hero-meta" aria-hidden="true">
+          <span>Solo project</span>
+          <span class="hero-meta-dot">·</span>
+          <span>Phase 1 of 5</span>
+          <span class="hero-meta-dot">·</span>
+          <span class="hero-status">🚧 In Progress</span>
+        </div>
+        <h1 class="hero-title" id="hero-title">
+          <span class="hero-title-line1">LLM Cost/Latency</span>
+          <span class="hero-title-line2">Router</span>
+        </h1>
+        <p class="hero-thesis">
+          Predicts whether a cheap, fast LLM is <strong>good enough</strong> for a given query, or whether it needs
+          to be routed to a larger, more expensive model &mdash; <strong>without calling either model first</strong>.
+          A classical ML classifier standing in for the default habit of routing every query to the biggest model available.
+        </p>
+        <div class="tech-tags" aria-label="Technologies used">
+          <span class="tech-tag">Python</span>
+          <span class="tech-tag">pandas</span>
+          <span class="tech-tag">scikit-learn</span>
+          <span class="tech-tag">XGBoost</span>
+          <span class="tech-tag">SHAP</span>
+          <span class="tech-tag">AWS Lambda</span>
+          <span class="tech-tag">DynamoDB</span>
+          <span class="tech-tag">LLM-as-Judge</span>
+        </div>
+        <a href="https://github.com/vledwardsjr/LLM-Router-Project"
+           class="repo-link"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="View LLM Router Project repository on GitHub">
+          View Repository <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <section id="overview" class="section" aria-labelledby="overview-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="overview-heading">What This Is Building Toward</h2>
+
+      <div class="status-banner reveal" role="note">
+        <span class="status-banner-icon" aria-hidden="true">🚧</span>
+        <p><strong>Day 1 &mdash; Phase 1 (dataset construction) in progress.</strong> Nothing is shipped yet. This
+        page tracks the live plan as it's built out, phase by phase, rather than presenting finished results that
+        don't exist.</p>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card reveal">
+          <h3>The Problem</h3>
+          <p>Evaluating LLM outputs professionally means constantly making one judgment call: is this response good
+          enough? Most teams answer it by defaulting every query to the largest, most capable model available &mdash;
+          a safe answer, but not a cheap or a <em>designed</em> one. There's no principled, upfront decision about
+          which queries actually need the expensive model.</p>
+        </div>
+        <div class="overview-card reveal">
+          <h3>The Approach</h3>
+          <p>Instead of building another LLM, this builds a classical ML classifier that looks at a query
+          <strong>before</strong> either model is called and predicts whether the small/cheap model will be
+          sufficient. Every feature has to be derivable from the query alone &mdash; if routing requires calling the
+          expensive model to check whether you needed it, it isn't saving anything.</p>
+        </div>
+        <div class="overview-card reveal">
+          <h3>Baselines It Has to Beat</h3>
+          <ul>
+            <li><strong>Always route to the large model</strong> &mdash; 100% quality, 0% cost savings</li>
+            <li><strong>Always route to the small model</strong> &mdash; maximum savings, unknown quality loss</li>
+          </ul>
+        </div>
+        <div class="overview-card reveal">
+          <h3>The Deliverable</h3>
+          <p>A cost-savings-vs-quality-loss Pareto frontier &mdash; the business-facing answer to "how much can we
+          save without hurting quality" &mdash; plus a real-time endpoint that acts on it.</p>
+        </div>
+      </div>
+
+      <p class="data-note reveal">Environment: Python 3.11, dedicated conda env, JupyterLab for notebooks.</p>
+    </div>
+  </section>
+
+  <!-- ═══ ROADMAP ═══ -->
+  <section id="roadmap" class="section" aria-labelledby="roadmap-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="roadmap-heading">Roadmap by Phase</h2>
+
+      <div class="roadmap">
+
+        <div class="roadmap-step reveal">
+          <div class="roadmap-step-rail">
+            <div class="roadmap-dot roadmap-dot--active"></div>
+            <div class="roadmap-line"></div>
+          </div>
+          <div class="roadmap-body">
+            <div class="roadmap-head">
+              <span class="roadmap-title">1. Dataset Construction</span>
+              <span class="status-pill status-pill--progress">In Progress</span>
+            </div>
+            <p class="roadmap-desc">Run a query set through a small (cheap/fast) and large (expensive/slow) LLM,
+            score both outputs with an LLM-judge, and derive a "small model sufficient" label. The judge itself gets
+            validated first: a manual sample (~50&ndash;100 queries) is hand-scored and checked for agreement before
+            trusting it on the full set.</p>
+            <div class="roadmap-tools">
+              <span class="tech-tag">Python</span>
+              <span class="tech-tag">pandas</span>
+              <span class="tech-tag">pyarrow</span>
+              <span class="tech-tag">LLM API (small + large)</span>
+              <span class="tech-tag">LLM-as-Judge</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-step reveal" data-delay="60">
+          <div class="roadmap-step-rail">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-line"></div>
+          </div>
+          <div class="roadmap-body">
+            <div class="roadmap-head">
+              <span class="roadmap-title">2. Feature Engineering</span>
+              <span class="status-pill status-pill--planned">Planned</span>
+            </div>
+            <p class="roadmap-desc">Extract query-level signals only: length, estimated reasoning-step count, entity
+            density, domain/task type, ambiguity, question type. No response-level features &mdash; the model has to
+            decide before either LLM runs. Every new feature gets checked against raw query length before being
+            trusted, so it's adding real signal and not just re-encoding word count.</p>
+            <div class="roadmap-tools">
+              <span class="tech-tag">pandas</span>
+              <span class="tech-tag">NumPy</span>
+              <span class="tech-tag">LLM-assisted extraction</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-step reveal" data-delay="120">
+          <div class="roadmap-step-rail">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-line"></div>
+          </div>
+          <div class="roadmap-body">
+            <div class="roadmap-head">
+              <span class="roadmap-title">3. Modeling</span>
+              <span class="status-pill status-pill--planned">Planned</span>
+            </div>
+            <p class="roadmap-desc">Logistic Regression baseline, then XGBoost as the main model. Evaluated on
+            precision/recall/ROC-AUC, with feature importance via SHAP &mdash; but accuracy alone isn't the bar;
+            Phase 4's tradeoff curve is.</p>
+            <div class="roadmap-tools">
+              <span class="tech-tag">scikit-learn</span>
+              <span class="tech-tag">XGBoost</span>
+              <span class="tech-tag">SHAP</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-step reveal" data-delay="180">
+          <div class="roadmap-step-rail">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-line"></div>
+          </div>
+          <div class="roadmap-body">
+            <div class="roadmap-head">
+              <span class="roadmap-title">4. Threshold Tuning &amp; Pareto Analysis</span>
+              <span class="status-pill status-pill--planned">Planned</span>
+            </div>
+            <p class="roadmap-desc">Sweep the classification threshold and plot cost savings (% routed to the cheap
+            model) against quality loss on those queries. This chart is the headline deliverable for stakeholders.</p>
+            <div class="roadmap-tools">
+              <span class="tech-tag">pandas</span>
+              <span class="tech-tag">NumPy</span>
+              <span class="tech-tag">matplotlib</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="roadmap-step reveal" data-delay="240">
+          <div class="roadmap-step-rail">
+            <div class="roadmap-dot"></div>
+          </div>
+          <div class="roadmap-body">
+            <div class="roadmap-head">
+              <span class="roadmap-title">5. Deployment &amp; Report</span>
+              <span class="status-pill status-pill--planned">Planned</span>
+            </div>
+            <p class="roadmap-desc">Wrap the trained model in a Lambda function behind API Gateway, with DynamoDB for
+            low-latency decision caching &mdash; a key-based lookup at request time, not a relational join,
+            deliberately not RDS. Final report covers dataset methodology, judge validation results, model
+            comparison, the Pareto curve, and the chosen threshold with business justification.</p>
+            <div class="roadmap-tools">
+              <span class="tech-tag">AWS Lambda</span>
+              <span class="tech-tag">API Gateway</span>
+              <span class="tech-tag">DynamoDB</span>
+              <span class="tech-tag">boto3</span>
+              <span class="tech-tag">S3</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PRINCIPLES ═══ -->
+  <section id="principles" class="section" aria-labelledby="principles-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="principles-heading">Engineering Principles</h2>
+      <p class="roadmap-desc reveal" style="margin-bottom: var(--sp-8);">Carried forward from lessons on a prior
+      evaluation project, applied here from day one rather than discovered the hard way twice.</p>
+
+      <div class="principles-grid">
+        <div class="principle-item reveal">
+          <div class="principle-name"><span class="principle-check" aria-hidden="true">&check;</span> Length Confound Check</div>
+          <p class="principle-reason">Every candidate feature gets tested against raw query length before it's
+          trusted as signal &mdash; ruling out features that just re-encode word count.</p>
+        </div>
+        <div class="principle-item reveal">
+          <div class="principle-name"><span class="principle-check" aria-hidden="true">&check;</span> Judge Validation Before Trust</div>
+          <p class="principle-reason">LLM-generated labels are checked against a manually-scored sample for agreement
+          before being used at scale.</p>
+        </div>
+        <div class="principle-item reveal">
+          <div class="principle-name"><span class="principle-check" aria-hidden="true">&check;</span> Business Framing Over Raw Accuracy</div>
+          <p class="principle-reason">The deliverable stakeholders see is the cost/quality Pareto curve, not a bare
+          accuracy number.</p>
+        </div>
+        <div class="principle-item reveal">
+          <div class="principle-name"><span class="principle-check" aria-hidden="true">&check;</span> Cloud Tools Chosen for Fit, Not Familiarity</div>
+          <p class="principle-reason">DynamoDB for latency-critical key lookups, S3 for logs, Lambda for the
+          endpoint. Each choice is justified in the final report rather than defaulted to.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <section id="stack" class="section" aria-labelledby="stack-heading">
+    <div class="container">
+      <h2 class="section-heading reveal" id="stack-heading">Tech Stack by Phase</h2>
+
+      <div class="stack-table-wrap reveal">
+        <table class="stack-table">
+          <thead>
+            <tr>
+              <th scope="col">Phase</th>
+              <th scope="col">Focus</th>
+              <th scope="col">Tools</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Dataset construction</td>
+              <td>Python, pandas, pyarrow, LLM API (small/cheap + large/expensive pairing), LLM-as-judge</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Feature engineering</td>
+              <td>pandas, NumPy, LLM-assisted extraction (reasoning-step count, ambiguity rating)</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Modeling</td>
+              <td>scikit-learn (Logistic Regression), XGBoost, SHAP</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Threshold tuning &amp; Pareto analysis</td>
+              <td>pandas, NumPy, matplotlib</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Deployment &amp; reporting</td>
+              <td>AWS Lambda, API Gateway, DynamoDB, boto3, S3</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <span class="data-note reveal" style="display: block; margin-top: var(--sp-8); border-top: none; padding-top: 0;">Project Structure</span>
+      <div class="code-block reveal" style="margin-top: var(--sp-3);">
+        <pre><span class="cb-dir">LLM-Router-Project/</span>
+├── data/                              <span class="cb-comment"># datasets (gitignored — populated in Phase 1)</span>
+├── models/                            <span class="cb-comment"># trained model artifacts (gitignored)</span>
+├── notebooks/
+│   ├── 01_dataset_build.ipynb         <span class="cb-comment"># build labeled query dataset</span>
+│   ├── 02_feature_engineering.ipynb   <span class="cb-comment"># query-level feature extraction</span>
+│   └── 03_modeling_evaluation.ipynb   <span class="cb-comment"># model training, tuning, Pareto analysis</span>
+├── reports/                           <span class="cb-comment"># final writeup, Pareto curve, findings (Phase 4-5)</span>
+├── src/
+│   ├── judge_labeling.py              <span class="cb-comment"># LLM-judge scoring + label derivation</span>
+│   ├── extract_features.py            <span class="cb-comment"># feature engineering functions</span>
+│   ├── train_model.py                 <span class="cb-comment"># model training/evaluation</span>
+│   └── routing_api.py                 <span class="cb-comment"># Lambda handler for deployed routing endpoint</span>
+├── requirements.txt                   <span class="cb-comment"># pinned dependencies</span>
+└── README.md</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="case-footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-name">Vaughn Edwards Jr.</span>
+      <div class="footer-links">
+        <a href="index.html">Portfolio</a>
+        <a href="https://github.com/vledwardsjr/LLM-Router-Project" target="_blank" rel="noopener noreferrer">Repository</a>
+        <a href="https://www.linkedin.com/in/vaughn-edwards-jr/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://github.com/vledwardsjr" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Intersection Observer for reveals ──
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!prefersReduced) {
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var delay = parseInt(entry.target.dataset.delay) || 0;
+          setTimeout(function() {
+            entry.target.classList.add('is-visible');
+          }, delay);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal, .hero-content').forEach(function(el) {
+      revealObserver.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal, .hero-content').forEach(function(el) {
+      el.classList.add('is-visible');
+    });
+  }
+
+  // ── Scroll spy ──
+  var nav = document.getElementById('case-nav');
+  var sections = document.querySelectorAll('.section[id], .hero');
+  var navLinks = document.querySelectorAll('.nav-link, .mobile-menu a');
+
+  function updateScrollSpy() {
+    var scrollY = window.scrollY + 100;
+
+    if (scrollY > 60) {
+      nav.classList.add('case-nav--scrolled');
+    } else {
+      nav.classList.remove('case-nav--scrolled');
+    }
+
+    var current = '';
+    sections.forEach(function(section) {
+      if (section.offsetTop <= scrollY) {
+        current = section.id || '';
+      }
+    });
+
+    navLinks.forEach(function(link) {
+      if (link.dataset.section === current) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  var scrollTicking = false;
+  window.addEventListener('scroll', function() {
+    if (!scrollTicking) {
+      requestAnimationFrame(function() {
+        updateScrollSpy();
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+  updateScrollSpy();
+
+  // ── Mobile nav ──
+  var mobileBtn = document.querySelector('.nav-mobile-btn');
+  var mobileMenu = document.getElementById('case-mobile-menu');
+
+  if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener('click', function() {
+      var isOpen = mobileBtn.getAttribute('aria-expanded') === 'true';
+      mobileBtn.setAttribute('aria-expanded', !isOpen);
+      mobileMenu.setAttribute('aria-hidden', isOpen);
+      mobileMenu.classList.toggle('open');
+    });
+
+    mobileMenu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        mobileBtn.setAttribute('aria-expanded', 'false');
+        mobileMenu.setAttribute('aria-hidden', 'true');
+        mobileMenu.classList.remove('open');
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
