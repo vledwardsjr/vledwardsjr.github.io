@@ -1,6 +1,6 @@
 .DS_Store
 Thumbs.db
-/.claude
-/.impeccable
-/.agents
+.claude/
+.impeccable/
+.agents/
 skills-lock.json
